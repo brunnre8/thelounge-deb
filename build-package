@@ -16,7 +16,8 @@ NPMVERSION=$(grep Version debian/control | awk -F': ' '{print $2}' | sed -E 's/-
 STARTDIR="$(pwd)"
 DESTDIR="$STARTDIR/pkg"
 OUTDIR="$STARTDIR/deb"
-NPMCACHE="$STARTDIR/npm_cache"
+CACHE="$STARTDIR/cache"
+export HOME="$STARTDIR" # because yarn is stupid and tries to mess with the user config files
 
 echo "Building $NPMVERSION..."
 
@@ -24,7 +25,9 @@ echo "Building $NPMVERSION..."
 rm -rf "$DESTDIR" "$OUTDIR"
 
 # Install the package itself
- npm install -g --no-optional --cache "$NPMCACHE" --prefix "$DESTDIR/usr" \
+yarn global add --no-default-rc --frozen-lockfile \
+	--prod --non-interactive --ignore-scripts --ignore-optional \
+	--cache-folder "$CACHE" --prefix "$DESTDIR/usr" --global-folder "$DESTDIR/usr/lib" \
 	"thelounge@${NPMVERSION}"
 
 # Write .thelounge_home to set correct system config directory
@@ -46,4 +49,4 @@ install -Dm644 "$STARTDIR/systemd/user.service" \
 # Build .deb
 mkdir "$DESTDIR/DEBIAN" "$OUTDIR"
 cp "$STARTDIR/debian/"* "$DESTDIR/DEBIAN/"
-dpkg-deb --root-owner-group --build "$DESTDIR" "$OUTDIR"
+# dpkg-deb --root-owner-group --build "$DESTDIR" "$OUTDIR"
